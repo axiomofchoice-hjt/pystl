@@ -4,7 +4,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 find_package(Python3 REQUIRED COMPONENTS Interpreter Development)
 find_package(Threads REQUIRED)
-add_subdirectory(third_party/pybind11)
+find_package(pybind11 REQUIRED)
 
 pybind11_add_module(${PROJECT_NAME} pystl/TreeDict.cc)
 target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_20)

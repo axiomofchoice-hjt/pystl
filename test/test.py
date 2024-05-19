@@ -3,3 +3,5 @@ a = TreeDict({1: 2, 3: 4})
 a = TreeDict([(1, 2), (3, 4)])
 
 print(str(a))
+print(a.__dir__())
+print({}.__dir__())
