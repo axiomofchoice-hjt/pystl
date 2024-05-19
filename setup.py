@@ -23,15 +23,13 @@ class CMakeBuild(build_ext):
             if hasattr(self, "parallel") and self.parallel:
                 build_args += [f"-j{self.parallel}"]
 
-        build_dir = base_dir / 'build'
+        build_dir = base_dir / "build"
         if not build_dir.exists():
             build_dir.mkdir(parents=True)
         print("cmd:", " ".join(["cmake", base_dir.as_posix(), *cmake_args]))
         print("cmd:", " ".join(["cmake", "--build", ".", *build_args]))
 
-        subprocess.run(
-            ["cmake", base_dir, *cmake_args], cwd=build_dir, check=True
-        )
+        subprocess.run(["cmake", base_dir, *cmake_args], cwd=build_dir, check=True)
         subprocess.run(
             ["cmake", "--build", ".", *build_args], cwd=build_dir, check=True
         )
@@ -48,4 +46,7 @@ setup(
     zip_safe=False,
     extras_require={"test": ["pytest>=6.0"]},
     python_requires=">=3.7",
+    package_data={
+        "pystl": ["py.typed"],
+    },
 )
