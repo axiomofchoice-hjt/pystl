@@ -10,11 +10,37 @@
 
 namespace py = pybind11;
 
+template <typename Iter>
+class Iterator {
+   private:
+    Iter it;
+    Iter end;
+
+   public:
+    Iterator(Iter it, Iter end) : it(it), end(end) {}
+    Iterator<Iter> __iter__() const { return Iterator<Iter>(it, end); }
+    py::object __next__() {
+        if (it == end) {
+            throw py::stop_iteration();
+        }
+        auto res = it->first;
+        ++it;
+        return res;
+    }
+};
+
 class TreeDict {
    private:
     std::map<py::object, py::object> map;
 
    public:
+    using iter_t = Iterator<std::map<py::object, py::object>::iterator>;
+    using reverse_iter_t =
+        Iterator<std::map<py::object, py::object>::reverse_iterator>;
+    iter_t __iter__() { return iter_t(map.begin(), map.end()); }
+    reverse_iter_t __reversed__() {
+        return reverse_iter_t(map.rbegin(), map.rend());
+    }
     TreeDict() {}
     explicit TreeDict(const std::map<py::object, py::object> &dict)
         : map(dict) {}
@@ -61,6 +87,13 @@ class TreeDict {
 PYBIND11_MODULE(pystl, m) {
     m.doc() = "example_pb bindings";
 
+    py::class_<TreeDict::iter_t>(m, "TreeDictKeyIterator")
+        .def("__next__", &TreeDict::iter_t::__next__, py::is_operator())
+        .def("__iter__", &TreeDict::iter_t::__iter__, py::is_operator());
+    py::class_<TreeDict::reverse_iter_t>(m, "TreeDictReverseKeyIterator")
+        .def("__next__", &TreeDict::reverse_iter_t::__next__, py::is_operator())
+        .def("__iter__", &TreeDict::reverse_iter_t::__iter__,
+             py::is_operator());
     py::class_<TreeDict>(m, "TreeDict")
         .def(py::init<>())
         .def(py::init<const std::map<py::object, py::object> &>())
@@ -70,6 +103,8 @@ PYBIND11_MODULE(pystl, m) {
         .def("__delitem__", &TreeDict::__delitem__, py::is_operator())
         .def("__getitem__", &TreeDict::__getitem__, py::is_operator())
         .def("__len__", &TreeDict::__len__, py::is_operator())
+        .def("__iter__", &TreeDict::__iter__, py::is_operator())
+        .def("__reversed__", &TreeDict::__reversed__, py::is_operator())
         .def("__str__", &TreeDict::__str__, py::is_operator())
         .def("__repr__", &TreeDict::__repr__, py::is_operator())
         // .def("test", &TreeDict::test)
