@@ -1,5 +1,5 @@
 """
-example_pb bindings
+pystl
 """
 from __future__ import annotations
 import typing
@@ -9,16 +9,16 @@ class TreeDict:
         ...
     def __delitem__(self, arg0: typing.Any) -> None:
         ...
-    def __getitem__(self, arg0: typing.Any) -> typing.Any:
+    def __getitem__(self, key: typing.Any) -> typing.Any:
         ...
     @typing.overload
     def __init__(self) -> None:
         ...
     @typing.overload
-    def __init__(self, arg0: dict[typing.Any, typing.Any]) -> None:
+    def __init__(self, mapping: dict[typing.Any, typing.Any]) -> None:
         ...
     @typing.overload
-    def __init__(self, arg0: list[tuple[typing.Any, typing.Any]]) -> None:
+    def __init__(self, iterable: typing.Iterable) -> None:
         ...
     def __iter__(self) -> TreeDictKeyIterator:
         ...
@@ -28,9 +28,11 @@ class TreeDict:
         ...
     def __reversed__(self) -> TreeDictReverseKeyIterator:
         ...
-    def __setitem__(self, arg0: typing.Any, arg1: typing.Any) -> None:
+    def __setitem__(self, key: typing.Any, value: typing.Any) -> None:
         ...
     def __str__(self) -> str:
+        ...
+    def get(self, key: typing.Any, default: typing.Any = None) -> typing.Any:
         ...
 class TreeDictKeyIterator:
     def __iter__(self) -> TreeDictKeyIterator:

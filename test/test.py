@@ -12,3 +12,6 @@ for i in a.__iter__():
 
 for i in reversed(a):
     print(i)
+
+print(a.get(7))
+print(a.get(7, 1))

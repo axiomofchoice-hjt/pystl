@@ -1,4 +1,5 @@
 #include <pybind11/attr.h>
+#include <pybind11/detail/common.h>
 #include <pybind11/pybind11.h>
 #include <pybind11/pytypes.h>
 #include <pybind11/stl.h>
@@ -42,18 +43,40 @@ class TreeDict {
         return reverse_iter_t(map.rbegin(), map.rend());
     }
     TreeDict() {}
-    explicit TreeDict(const std::map<py::object, py::object> &dict)
-        : map(dict) {}
-    explicit TreeDict(
-        const std::vector<std::pair<py::object, py::object>> &list)
-        : map(list.begin(), list.end()) {}
-    py::object __getitem__(py::object key) const { return map.at(key); }
+    explicit TreeDict(std::map<py::object, py::object> dict) : map(dict) {}
+    explicit TreeDict(py::iterable iterable) {
+        for (auto it = iterable.begin(); it != iterable.end(); ++it) {
+            py::iterable item = it->cast<py::iterable>();
+            std::vector<py::object> list;
+            for (auto i = item.begin(); i != item.end(); ++i) {
+                list.push_back(i->cast<py::object>());
+            }
+            if (list.size() != 2) {
+                throw py::value_error();
+            }
+            __setitem__(list[0], list[1]);
+        }
+    }
+    py::object get(py::object key, py::object default_value) {
+        if (map.find(key) != map.end()) {
+            return map.at(key);
+        } else {
+            return default_value;
+        }
+    }
+    py::object __getitem__(py::object key) {
+        if (map.find(key) != map.end()) {
+            return map.at(key);
+        } else {
+            throw py::key_error();
+        }
+    }
     void __setitem__(py::object key, py::object value) { map[key] = value; }
-    bool __contains__(py::object key) const { return map.contains(key); }
+    bool __contains__(py::object key) { return map.contains(key); }
     void __delitem__(py::object key) { map.erase(key); }
-    int64_t __len__() const { return map.size(); }
+    int64_t __len__() { return map.size(); }
 
-    std::string __str__() const {
+    std::string __str__() {
         std::string res = "TreeDict({";
         for (auto it = map.begin(); it != map.end(); ++it) {
             res += it->first.attr("__str__")().cast<std::string>();
@@ -67,7 +90,7 @@ class TreeDict {
         return res;
     }
 
-    std::string __repr__() const {
+    std::string __repr__() {
         std::string res = "TreeDict({";
         for (auto it = map.begin(); it != map.end(); ++it) {
             res += it->first.attr("__repr__")().cast<std::string>();
@@ -85,7 +108,7 @@ class TreeDict {
 };
 
 PYBIND11_MODULE(pystl, m) {
-    m.doc() = "example_pb bindings";
+    m.doc() = "pystl";
 
     py::class_<TreeDict::iter_t>(m, "TreeDictKeyIterator")
         .def("__next__", &TreeDict::iter_t::__next__, py::is_operator())
@@ -96,12 +119,16 @@ PYBIND11_MODULE(pystl, m) {
              py::is_operator());
     py::class_<TreeDict>(m, "TreeDict")
         .def(py::init<>())
-        .def(py::init<const std::map<py::object, py::object> &>())
-        .def(py::init<const std::vector<std::pair<py::object, py::object>> &>())
-        .def("__setitem__", &TreeDict::__setitem__, py::is_operator())
+        .def(py::init<std::map<py::object, py::object>>(), py::arg("mapping"))
+        .def(py::init<py::iterable>(), py::arg("iterable"))
+        .def("get", &TreeDict::get, py::arg("key"),
+             py::arg("default") = py::none())
+        .def("__getitem__", &TreeDict::__getitem__, py::arg("key"),
+             py::is_operator())
+        .def("__setitem__", &TreeDict::__setitem__, py::arg("key"),
+             py::arg("value"), py::is_operator())
         .def("__contains__", &TreeDict::__contains__, py::is_operator())
         .def("__delitem__", &TreeDict::__delitem__, py::is_operator())
-        .def("__getitem__", &TreeDict::__getitem__, py::is_operator())
         .def("__len__", &TreeDict::__len__, py::is_operator())
         .def("__iter__", &TreeDict::__iter__, py::is_operator())
         .def("__reversed__", &TreeDict::__reversed__, py::is_operator())
