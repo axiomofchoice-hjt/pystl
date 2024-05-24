@@ -6,7 +6,7 @@ import typing
 __all__ = ['TreeDict', 'TreeDictKeyIterator', 'TreeDictReverseKeyIterator']
 class TreeDict:
     @staticmethod
-    def fromkeys(arg0: typing.Iterable, arg1: typing.Any) -> TreeDict:
+    def fromkeys(iterable: typing.Iterable, value: typing.Any = None) -> TreeDict:
         ...
     def __contains__(self, arg0: typing.Any) -> bool:
         ...
@@ -43,9 +43,9 @@ class TreeDict:
         ...
     def has_key(self, key: typing.Any) -> bool:
         ...
-    def items(self) -> list:
+    def items(self) -> list[tuple[typing.Any, typing.Any]]:
         ...
-    def keys(self) -> list:
+    def keys(self) -> list[typing.Any]:
         ...
     @typing.overload
     def pop(self, key: typing.Any) -> typing.Any:
@@ -64,7 +64,7 @@ class TreeDict:
     @typing.overload
     def update(self, iterable: typing.Iterable, **kwargs) -> None:
         ...
-    def values(self) -> list:
+    def values(self) -> list[typing.Any]:
         ...
 class TreeDictKeyIterator:
     def __iter__(self) -> TreeDictKeyIterator:

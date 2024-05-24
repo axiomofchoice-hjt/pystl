@@ -81,27 +81,24 @@ class TreeDict {
             return default_value;
         }
     }
-    py::list items() {
-        py::list res;
+    std::vector<std::pair<py::object, py::object>> items() {
+        std::vector<std::pair<py::object, py::object>> res;
         for (auto it = map.begin(); it != map.end(); ++it) {
-            py::tuple item(2);
-            item[0] = it->first;
-            item[1] = it->second;
-            res.append(item);
+            res.push_back(*it);
         }
         return res;
     }
-    py::list keys() {
-        py::list res;
+    std::vector<py::object> keys() {
+        std::vector<py::object> res;
         for (auto it = map.begin(); it != map.end(); ++it) {
-            res.append(it->first);
+            res.push_back(it->first);
         }
         return res;
     }
-    py::list values() {
-        py::list res;
+    std::vector<py::object> values() {
+        std::vector<py::object> res;
         for (auto it = map.begin(); it != map.end(); ++it) {
-            res.append(it->second);
+            res.push_back(it->second);
         }
         return res;
     }
