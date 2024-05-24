@@ -5,7 +5,9 @@
 #include <pybind11/stl.h>
 
 #include <cstdint>
+#include <iostream>
 #include <map>
+#include <tuple>
 #include <utility>
 #include <vector>
 
@@ -33,6 +35,26 @@ class Iterator {
 class TreeDict {
    private:
     std::map<py::object, py::object> map;
+    void set(py::handle key, py::handle value) {
+        map[key.cast<py::object>()] = value.cast<py::object>();
+    }
+    void set(py::iterable iterable) {
+        py::list list(iterable);
+        if (py::len(list) != 2) {
+            throw py::value_error();
+        }
+        set(list[0], list[1]);
+    }
+    void batch_set(py::iterable list) {
+        for (auto item : list) {
+            set(item.cast<py::iterable>());
+        }
+    }
+    void batch_set(py::dict dict) {
+        for (auto item : dict) {
+            set(item.first, item.second);
+        }
+    }
 
    public:
     using iter_t = Iterator<std::map<py::object, py::object>::iterator>;
@@ -43,19 +65,14 @@ class TreeDict {
         return reverse_iter_t(map.rbegin(), map.rend());
     }
     TreeDict() {}
-    explicit TreeDict(std::map<py::object, py::object> dict) : map(dict) {}
-    explicit TreeDict(py::iterable iterable) {
-        for (auto it = iterable.begin(); it != iterable.end(); ++it) {
-            py::iterable item = it->cast<py::iterable>();
-            std::vector<py::object> list;
-            for (auto i = item.begin(); i != item.end(); ++i) {
-                list.push_back(i->cast<py::object>());
-            }
-            if (list.size() != 2) {
-                throw py::value_error();
-            }
-            __setitem__(list[0], list[1]);
-        }
+    TreeDict(py::kwargs kwargs) { batch_set(kwargs); }
+    explicit TreeDict(py::dict dict, py::kwargs kwargs) {
+        batch_set(dict);
+        batch_set(kwargs);
+    }
+    explicit TreeDict(py::iterable iterable, py::kwargs kwargs) {
+        batch_set(iterable);
+        batch_set(kwargs);
     }
     py::object get(py::object key, py::object default_value) {
         if (map.find(key) != map.end()) {
@@ -63,6 +80,82 @@ class TreeDict {
         } else {
             return default_value;
         }
+    }
+    py::list items() {
+        py::list res;
+        for (auto it = map.begin(); it != map.end(); ++it) {
+            py::tuple item(2);
+            item[0] = it->first;
+            item[1] = it->second;
+            res.append(item);
+        }
+        return res;
+    }
+    py::list keys() {
+        py::list res;
+        for (auto it = map.begin(); it != map.end(); ++it) {
+            res.append(it->first);
+        }
+        return res;
+    }
+    py::list values() {
+        py::list res;
+        for (auto it = map.begin(); it != map.end(); ++it) {
+            res.append(it->second);
+        }
+        return res;
+    }
+    void update(py::kwargs kwargs) { batch_set(kwargs); }
+    void update(py::dict dict, py::kwargs kwargs) {
+        batch_set(dict);
+        batch_set(kwargs);
+    }
+    void update(py::iterable iterable, py::kwargs kwargs) {
+        batch_set(iterable);
+        batch_set(kwargs);
+    }
+    void clear() { map.clear(); }
+    py::object pop(py::object key) {
+        auto it = map.find(key);
+        if (it != map.end()) {
+            auto res = it->second;
+            map.erase(it);
+            return res;
+        } else {
+            throw py::key_error();
+        }
+    }
+    py::object pop(py::object key, py::object default_value) {
+        auto it = map.find(key);
+        if (it != map.end()) {
+            auto res = it->second;
+            map.erase(it);
+            return res;
+        } else {
+            return default_value;
+        }
+    }
+    std::pair<py::object, py::object> popitem() {
+        if (map.empty()) {
+            throw py::key_error();
+        }
+        auto it = map.begin();
+        auto res = *it;
+        map.erase(it);
+        return res;
+    }
+    bool has_key(py::object key) { return map.contains(key); }
+    TreeDict copy() {
+        TreeDict res;
+        res.map = map;
+        return res;
+    }
+    static TreeDict fromkeys(py::iterable keys, py::object default_value) {
+        TreeDict res;
+        for (auto key : keys) {
+            res.set(key, default_value);
+        }
+        return res;
     }
     py::object __getitem__(py::object key) {
         if (map.find(key) != map.end()) {
@@ -75,35 +168,20 @@ class TreeDict {
     bool __contains__(py::object key) { return map.contains(key); }
     void __delitem__(py::object key) { map.erase(key); }
     int64_t __len__() { return map.size(); }
-
-    std::string __str__() {
-        std::string res = "TreeDict({";
+    py::str __str__() {
+        py::str res = "TreeDict([";
         for (auto it = map.begin(); it != map.end(); ++it) {
-            res += it->first.attr("__str__")().cast<std::string>();
-            res += ": ";
-            res += it->second.attr("__str__")().cast<std::string>();
+            res += py::str("({}, {})")
+                       .format(py::repr(it->first), py::repr(it->second));
             if (std::next(it) != map.end()) {
-                res += ", ";
+                res += py::str(", ");
             }
         }
-        res += "})";
+        res += py::str("])");
         return res;
     }
 
-    std::string __repr__() {
-        std::string res = "TreeDict({";
-        for (auto it = map.begin(); it != map.end(); ++it) {
-            res += it->first.attr("__repr__")().cast<std::string>();
-            res += ": ";
-            res += it->second.attr("__repr__")().cast<std::string>();
-            if (std::next(it) != map.end()) {
-                res += ", ";
-            }
-        }
-        res += "})";
-        return res;
-    }
-
+    py::str __repr__() { return __str__(); }
     // py::object test(py::dict dict) { return ; }
 };
 
@@ -118,11 +196,31 @@ PYBIND11_MODULE(pystl, m) {
         .def("__iter__", &TreeDict::reverse_iter_t::__iter__,
              py::is_operator());
     py::class_<TreeDict>(m, "TreeDict")
-        .def(py::init<>())
-        .def(py::init<std::map<py::object, py::object>>(), py::arg("mapping"))
-        .def(py::init<py::iterable>(), py::arg("iterable"))
+        .def(py::init<py::kwargs>())
+        .def(py::init<py::dict, py::kwargs>(), py::arg("mapping"))
+        .def(py::init<py::iterable, py::kwargs>(), py::arg("iterable"))
         .def("get", &TreeDict::get, py::arg("key"),
              py::arg("default") = py::none())
+        .def("items", &TreeDict::items)
+        .def("keys", &TreeDict::keys)
+        .def("values", &TreeDict::values)
+        .def("update", py::overload_cast<py::kwargs>(&TreeDict::update))
+        .def("update",
+             py::overload_cast<py::dict, py::kwargs>(&TreeDict::update),
+             py::arg("mapping"))
+        .def("update",
+             py::overload_cast<py::iterable, py::kwargs>(&TreeDict::update),
+             py::arg("iterable"))
+        .def("clear", &TreeDict::clear)
+        .def("pop", py::overload_cast<py::object>(&TreeDict::pop),
+             py::arg("key"))
+        .def("pop", py::overload_cast<py::object, py::object>(&TreeDict::pop),
+             py::arg("key"), py::arg("default"))
+        .def("popitem", &TreeDict::popitem)
+        .def("has_key", &TreeDict::has_key, py::arg("key"))
+        .def("copy", &TreeDict::copy)
+        .def_static("fromkeys", &TreeDict::fromkeys, py::arg("iterable"),
+                    py::arg("value") = py::none())
         .def("__getitem__", &TreeDict::__getitem__, py::arg("key"),
              py::is_operator())
         .def("__setitem__", &TreeDict::__setitem__, py::arg("key"),

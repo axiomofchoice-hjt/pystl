@@ -1,12 +1,14 @@
 from pystl import TreeDict
 
-a = TreeDict({1: 2, 3: 4})
+a = TreeDict({"a": 2, "b": 4}, a=1)
+print(a)
+a = TreeDict([("a", 2), ("b", 6)])
+print(a)
 a = TreeDict([(1, 2), (5, 6), (3, 4)])
 
+print({i for i in a})
+
 print(str(a))
-print(a.__dir__())
-print({}.__dir__())
-print(set({}.__dir__()) - set(a.__dir__()))
 for i in a.__iter__():
     print(i)
 
