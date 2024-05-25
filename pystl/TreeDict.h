@@ -19,7 +19,7 @@ struct Iterator {
         if (to == end) {
             throw py::stop_iteration();
         }
-        auto res = static_cast<Base*>(this)->unwrap();
+        auto res = static_cast<Base *>(this)->unwrap();
         ++to;
         return res;
     }
@@ -48,39 +48,39 @@ struct TreeDict {
     struct ItemIter
         : Iterator<ItemIter, std::map<py::object, py::object>::iterator> {
         using Iter = std::map<py::object, py::object>::iterator;
-        py::object unwrap() ;
+        py::object unwrap();
     };
-    ItemIter iteritems() ;
+    ItemIter iteritems();
     KeyIter iterkeys();
     ValueIter itervalues();
-    KeyIter __iter__() ;
-    RKeyIter __reversed__() ;
-    TreeDict() ;
+    KeyIter __iter__();
+    RKeyIter __reversed__();
+    TreeDict();
     TreeDict(py::kwargs kwargs);
-    explicit TreeDict(py::dict dict, py::kwargs kwargs) ;
-    explicit TreeDict(py::iterable iterable, py::kwargs kwargs);
+    TreeDict(py::dict dict, py::kwargs kwargs);
+    TreeDict(py::iterable iterable, py::kwargs kwargs);
     py::object get(py::object key, py::object default_value);
-    std::vector<std::pair<py::object, py::object>> items() ;
-    std::vector<py::object> keys() ;
-    std::vector<py::object> values() ;
-    void update(py::kwargs kwargs) ;
-    void update(py::dict dict, py::kwargs kwargs) ;
-    void update(py::iterable iterable, py::kwargs kwargs) ;
-    void clear() ;
-    py::object pop(py::object key) ;
+    std::vector<std::pair<py::object, py::object>> items();
+    std::vector<py::object> keys();
+    std::vector<py::object> values();
+    void update(py::kwargs kwargs);
+    void update(py::dict dict, py::kwargs kwargs);
+    void update(py::iterable iterable, py::kwargs kwargs);
+    void clear();
+    py::object pop(py::object key);
     py::object pop(py::object key, py::object default_value);
-    std::pair<py::object, py::object> popitem() ;
-    bool has_key(py::object key) ;
-    TreeDict copy() ;
-    static TreeDict fromkeys(py::iterable keys, py::object default_value) ;
-    py::object __getitem__(py::object key) ;
+    std::pair<py::object, py::object> popitem();
+    bool has_key(py::object key);
+    TreeDict copy();
+    static TreeDict fromkeys(py::iterable keys, py::object default_value);
+    py::object __getitem__(py::object key);
     void __setitem__(py::object key, py::object value);
-    bool __contains__(py::object key) ;
-    void __delitem__(py::object key) ;
+    bool __contains__(py::object key);
+    void __delitem__(py::object key);
     int64_t __len__();
     py::object lower_bound(py::object key);
     py::object upper_bound(py::object key);
-    py::str __str__() ;
+    py::str __str__();
     py::str __repr__();
 };
 

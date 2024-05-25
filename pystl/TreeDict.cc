@@ -151,6 +151,9 @@ py::object TreeDict::upper_bound(py::object key) {
     return map.upper_bound(key)->first;
 }
 py::str TreeDict::__str__() {
+    if (map.empty()) {
+        return "TreeDict()";
+    }
     py::str res = "TreeDict([";
     for (auto it = map.begin(); it != map.end(); ++it) {
         res += py::str("({}, {})")
