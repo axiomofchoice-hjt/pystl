@@ -3,27 +3,11 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
+#include "utils.h"
+
 namespace TreeDict {
 
 namespace py = pybind11;
-
-template <typename Base, typename base_iter_t>
-struct Iterator {
-   public:
-    using Iter = base_iter_t;
-    Iter to;
-    Iter end;
-
-    Base __iter__() const { return Base{to, end}; }
-    py::object __next__() {
-        if (to == end) {
-            throw py::stop_iteration();
-        }
-        auto res = static_cast<Base *>(this)->unwrap();
-        ++to;
-        return res;
-    }
-};
 
 struct TreeDict {
     using base_map_t = std::map<py::object, py::object>;
@@ -33,20 +17,22 @@ struct TreeDict {
     void batch_set(py::iterable list);
     void batch_set(py::dict dict);
     struct KeyIter
-        : Iterator<KeyIter, std::map<py::object, py::object>::iterator> {
+        : utils::Iterator<KeyIter, std::map<py::object, py::object>::iterator> {
         py::object unwrap();
     };
     struct RKeyIter
-        : Iterator<RKeyIter,
-                   std::map<py::object, py::object>::reverse_iterator> {
+        : utils::Iterator<RKeyIter,
+                          std::map<py::object, py::object>::reverse_iterator> {
         py::object unwrap();
     };
     struct ValueIter
-        : Iterator<ValueIter, std::map<py::object, py::object>::iterator> {
+        : utils::Iterator<ValueIter,
+                          std::map<py::object, py::object>::iterator> {
         py::object unwrap();
     };
     struct ItemIter
-        : Iterator<ItemIter, std::map<py::object, py::object>::iterator> {
+        : utils::Iterator<ItemIter,
+                          std::map<py::object, py::object>::iterator> {
         using Iter = std::map<py::object, py::object>::iterator;
         py::object unwrap();
     };
